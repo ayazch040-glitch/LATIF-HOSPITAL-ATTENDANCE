@@ -1,4 +1,7 @@
-
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+let staff = null;
 async function login() {
   const msg = document.getElementById("message");
 
