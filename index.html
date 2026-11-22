@@ -88,7 +88,7 @@ async function login(){
     const doc=await db.collection("staff").doc(uid).get();
     if(!doc.exists){
       await auth.signOut();
-      msg.innerText="Staff profile not found. Please contact admin.";
+      msg.innerText="Staff profile not found. UID: "+uid;
       return;
     }
     staff=doc.data();
