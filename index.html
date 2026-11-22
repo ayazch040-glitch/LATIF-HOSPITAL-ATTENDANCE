@@ -1,26 +1,32 @@
 
-async function login(){
-  const msg=document.getElementById("message");
-  try{
-    const result=await auth.signInWithEmailAndPassword(
-      document.getElementById("email").value.trim(),
-      document.getElementById("password").value
-    );
+async function login() {
+  const msg = document.getElementById("message");
 
-    const uid=result.user.uid;
-    const doc=await db.collection("staff").doc(uid).get();
+  try {
+    msg.innerText = "Logging in...";
 
-    if(!doc.exists){
-      msg.innerText="Staff profile not found. UID: "+uid;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    const result = await auth.signInWithEmailAndPassword(email, password);
+    const uid = result.user.uid;
+
+    const doc = await db.collection("staff").doc(uid).get();
+
+    if (!doc.exists) {
+      msg.innerText = "Staff profile not found. UID: " + uid;
       await auth.signOut();
       return;
     }
 
-    staff=doc.data();
-    currentUser=result.user;
+    staff = doc.data();
+    currentUser = result.user;
+
+    msg.innerText = "";
     showApp();
 
-  }catch(e){
-    msg.innerText=e.message;
+  } catch (e) {
+    msg.innerText = "Error: " + e.message;
+    console.error(e);
   }
 }
