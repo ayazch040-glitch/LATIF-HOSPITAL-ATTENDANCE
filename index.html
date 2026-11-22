@@ -170,7 +170,7 @@
       const result = await auth.signInWithEmailAndPassword(email, password);
       const uid = result.user.uid;
 
-      const doc = await db.collection("staff").doc(uid).get();
+      const doc = await db.collection("STAFF").doc(uid).get();
 
       if (!doc.exists) {
         msg.innerText = "Staff profile not found. UID: " + uid;
