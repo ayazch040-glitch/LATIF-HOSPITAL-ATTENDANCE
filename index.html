@@ -85,8 +85,14 @@ async function login(){
       document.getElementById("password").value
     );
     const uid=result.user.uid;
-    const doc=await db.collection("staff").doc(uid).get();
-    if(!doc.exists){
+  
+const snap=await db.collection("staff").where("uid","==",uid).limit(1).get();
+if(snap.empty){
+  await auth.signOut();
+  msg.innerText="Staff profile not found. UID: "+uid;
+  return;
+}
+staff=snap.docs[0].data();
       await auth.signOut();
       msg.innerText="Staff profile not found. UID: "+uid;
       return;
