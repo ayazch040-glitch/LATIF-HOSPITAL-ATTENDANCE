@@ -97,7 +97,6 @@ staff=snap.docs[0].data();
       msg.innerText="Staff profile not found. UID: "+uid;
       return;
     }
-    staff=doc.data();
     currentUser=result.user;
     showApp();
   }catch(e){msg.innerText=e.message;}
