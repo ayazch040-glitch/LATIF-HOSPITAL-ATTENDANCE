@@ -1,1 +1,164 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Latif Hospital Attendance</title>
+  <style>
+    body{font-family:Arial;background:#f1f5f9;margin:0;padding:20px}
+    .box{max-width:500px;margin:25px auto;background:white;padding:24px;border-radius:14px;box-shadow:0 2px 12px #ccc}
+    h2{text-align:center;color:#087e75}
+    input,button{width:100%;padding:13px;margin:9px 0;box-sizing:border-box;border-radius:7px;font-size:16px}
+    input{border:1px solid #bbb}
+    button{border:0;background:#087e75;color:white;cursor:pointer}
+    .red{background:#b91c1c}
+    #app{display:none}
+    .record{padding:12px;border-bottom:1px solid #ddd}
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>Latif Hospital</h2>
+  <h3>Staff Attendance System</h3>
+
+  <div id="login">
+    <input id="email" type="email" placeholder="Email Address">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="message"></p>
+  </div>
+
+  <div id="app">
+    <h3 id="welcome"></h3>
+    <button onclick="checkIn()">CHECK IN</button>
+    <button onclick="checkOut()">CHECK OUT</button>
+    <div id="admin" style="display:none">
+      <h3>Attendance Records</h3>
+      <button onclick="loadRecords()">View Records</button>
+      <div id="records"></div>
+    </div>
+    <button class="red" onclick="logout()">Logout</button>
+    <p id="status"></p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+firebase.initializeApp({
+  apiKey: "AIzaSyD5TkKX68UjpPNLxOi3tttorLDOrYl4UMo",
+  authDomain: "latif-hospital-attendance.firebaseapp.com",
+  projectId: "latif-hospital-attendance",
+  storageBucket: "latif-hospital-attendance.firebasestorage.app",
+  messagingSenderId: "197742542724",
+  appId: "1:197742542724:web:9f9903c333c7b3981ba7d1",
+  measurementId: "G-EZW9BYGNW4"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+let staff = null;
+
+function timeNow(){
+  return new Date().toLocaleString("en-PK",{
+    timeZone:"Asia/Karachi",
+    dateStyle:"short",
+    timeStyle:"medium"
+  });
+}
+function today(){
+  return new Intl.DateTimeFormat("en-CA",{
+    timeZone:"Asia/Karachi",
+    year:"numeric",month:"2-digit",day:"2-digit"
+  }).format(new Date());
+}
+
+async function login(){
+  const msg=document.getElementById("message");
+  try{
+    const result=await auth.signInWithEmailAndPassword(
+      document.getElementById("email").value.trim(),
+      document.getElementById("password").value
+    );
+    const uid=result.user.uid;
+    const doc=await db.collection("staff").doc(uid).get();
+    if(!doc.exists){
+      await auth.signOut();
+      msg.innerText="Staff profile not found. Please contact admin.";
+      return;
+    }
+    staff=doc.data();
+    currentUser=result.user;
+    showApp();
+  }catch(e){msg.innerText=e.message;}
+}
+
+function showApp(){
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  document.getElementById("welcome").innerText="Welcome, "+(staff.name||"Staff");
+  if(staff.role==="admin"){
+    document.getElementById("admin").style.display="block";
+  }
+}
+
+async function checkIn(){
+  try{
+    const id=currentUser.uid+"_"+today();
+    const ref=db.collection("attendance").doc(id);
+    const old=await ref.get();
+    if(old.exists && old.data().checkIn){
+      document.getElementById("status").innerText="Already checked in today.";
+      return;
+    }
+    await ref.set({
+      uid:currentUser.uid,
+      employeeId:currentUser.uid,
+      name:staff.name||"Staff",
+      date:today(),
+      checkIn:timeNow(),
+      checkOut:""
+    },{merge:true});
+    document.getElementById("status").innerText="Check In successful!";
+  }catch(e){document.getElementById("status").innerText=e.message;}
+}
+
+async function checkOut(){
+  try{
+    const id=currentUser.uid+"_"+today();
+    const ref=db.collection("attendance").doc(id);
+    const old=await ref.get();
+    if(!old.exists || !old.data().checkIn){
+      document.getElementById("status").innerText="Please Check In first.";
+      return;
+    }
+    await ref.update({checkOut:timeNow()});
+    document.getElementById("status").innerText="Check Out successful!";
+  }catch(e){document.getElementById("status").innerText=e.message;}
+}
+
+async function loadRecords(){
+  const area=document.getElementById("records");
+  area.innerHTML="Loading...";
+  try{
+    const snap=await db.collection("attendance").orderBy("date","desc").get();
+    area.innerHTML="";
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const div=document.createElement("div");
+      div.className="record";
+      div.textContent=(d.name||"Staff")+" | "+(d.date||"")+" | In: "+(d.checkIn||"-")+" | Out: "+(d.checkOut||"-");
+      area.appendChild(div);
+    });
+  }catch(e){area.innerText=e.message;}
+}
+
+function logout(){auth.signOut().then(()=>location.reload());}
+</script>
+</body>
+</html>
+
