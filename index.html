@@ -281,6 +281,8 @@ function verifyHospitalLocation(message) {
       if (!currentUser) return;
       const locationAllowed = await verifyHospitalLocation(msg);
 if (!locationAllowed) return;
+      const locationAllowed = await verifyHospitalLocation(msg);
+if (!locationAllowed) return;
 
       const date = pakistanDate();
       const recordId = currentUser.uid + "_" + date;
@@ -314,6 +316,8 @@ if (!locationAllowed) return;
 
   // CHECK OUT
   async function checkOut() {
+    const locationAllowed = await verifyHospitalLocation(msg);
+if (!locationAllowed) return;
     const msg = document.getElementById("attendanceMessage");
 
     try {
