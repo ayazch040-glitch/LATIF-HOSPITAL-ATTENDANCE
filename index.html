@@ -203,11 +203,84 @@
   }
 
   // CHECK IN
+  
+// LATIF ORTHOPEDIC HOSPITAL GPS LOCATION
+const HOSPITAL_LAT = 31.796576833446725;
+const HOSPITAL_LNG = 74.25336237431742;
+const ALLOWED_RADIUS = 200;
+
+function distanceInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = value => value * Math.PI / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) *
+    Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function verifyHospitalLocation(message) {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) {
+      message.innerText = "GPS is not supported on this device.";
+      resolve(false);
+      return;
+    }
+
+    message.innerText = "Checking your GPS location...";
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const { latitude, longitude, accuracy } = position.coords;
+
+        if (accuracy > 100) {
+          message.innerText =
+            "GPS accuracy is low. Please try again outdoors.";
+          resolve(false);
+          return;
+        }
+
+        const distance = distanceInMeters(
+          latitude, longitude,
+          HOSPITAL_LAT, HOSPITAL_LNG
+        );
+
+        if (distance <= ALLOWED_RADIUS) {
+          message.innerText = "Hospital location verified.";
+          resolve(true);
+        } else {
+          message.innerText =
+            "You are outside the hospital's 200-meter area. Check In/Out not allowed.";
+          resolve(false);
+        }
+      },
+      error => {
+        message.innerText =
+          "Please enable phone location and allow website GPS access.";
+        resolve(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
+    );
+  });
+}
+
   async function checkIn() {
     const msg = document.getElementById("attendanceMessage");
 
     try {
       if (!currentUser) return;
+      const locationAllowed = await verifyHospitalLocation(msg);
+if (!locationAllowed) return;
 
       const date = pakistanDate();
       const recordId = currentUser.uid + "_" + date;
@@ -245,6 +318,8 @@
 
     try {
       if (!currentUser) return;
+      const locationAllowed = await verifyHospitalLocation(msg);
+if (!locationAllowed) return;
 
       const date = pakistanDate();
       const recordId = currentUser.uid + "_" + date;
