@@ -8,181 +8,130 @@
 
   <style>
     * { box-sizing: border-box; }
-
     body {
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
       margin: 0;
       padding: 20px;
-      color: #1e293b;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #172033;
     }
-
     .container {
-      max-width: 850px;
-      margin: 20px auto;
+      max-width: 700px;
+      margin: 25px auto;
     }
-
-    .header {
-      background: #075985;
-      color: white;
-      padding: 22px;
-      border-radius: 12px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
     .card {
       background: white;
       padding: 22px;
-      border-radius: 12px;
       margin-bottom: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.07);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px #00000012;
     }
-
-    h2 { margin-top: 0; }
-
-    input {
+    h2, h3 { text-align: center; }
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+    }
+    input, button {
       width: 100%;
       padding: 13px;
-      margin: 8px 0 15px;
-      border: 1px solid #cbd5e1;
+      margin: 8px 0;
       border-radius: 7px;
       font-size: 16px;
     }
-
+    input { border: 1px solid #cbd5e1; }
     button {
-      padding: 13px 18px;
       border: none;
-      border-radius: 7px;
-      background: #0284c7;
+      background: #087c58;
       color: white;
-      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
-      margin: 5px;
     }
-
-    button:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-    }
-
-    .green { background: #15803d; }
-    .red { background: #dc2626; }
-    .gray { background: #475569; }
-
+    button:disabled { opacity: .6; }
+    .checkout { background: #2563eb; }
+    .logout { background: #dc2626; }
     .record {
-      border: 1px solid #e2e8f0;
-      padding: 14px;
-      border-radius: 8px;
-      margin: 10px 0;
-      background: #f8fafc;
-    }
-
-    .message {
       padding: 12px;
-      margin-top: 12px;
+      margin: 10px 0;
       background: #f1f5f9;
-      border-radius: 7px;
+      border-radius: 8px;
       overflow-wrap: anywhere;
     }
-
-    .small { color: #64748b; font-size: 13px; }
-
-    .hidden { display: none; }
-
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+    .message {
+      text-align: center;
+      font-weight: bold;
+      color: #075985;
+      overflow-wrap: anywhere;
     }
-
-    @media(max-width: 500px) {
-      body { padding: 10px; }
-      .card { padding: 16px; }
-      button { flex: 1; }
+    .small {
+      color: #64748b;
+      font-size: 13px;
     }
+    #app, #admin { display: none; }
   </style>
 </head>
 
 <body>
-
 <div class="container">
 
-  <div class="header">
-    <h1>LATIF ORTHOPEDIC HOSPITAL</h1>
-    <p>Staff Attendance Management System</p>
+  <div class="card">
+    <h2>Latif Orthopedic Hospital</h2>
+    <p class="subtitle">Physiotherapy Center - Muridke</p>
+    <p class="subtitle">Staff Attendance Management System</p>
   </div>
 
   <!-- LOGIN -->
-  <div id="login" class="card">
-    <h2>Staff Login</h2>
+  <div class="card" id="login">
+    <h3>Staff Login</h3>
 
-    <label>Email Address</label>
-    <input id="email" type="email" placeholder="Enter your Gmail">
-
-    <label>Password</label>
-    <input id="password" type="password" placeholder="Enter password">
+    <input id="email" type="email" placeholder="Enter Email">
+    <input id="password" type="password" placeholder="Enter Password">
 
     <button id="loginButton" onclick="login()">Login</button>
-
-    <div id="message" class="message">
-      Please enter your email and password.
-    </div>
+    <p id="message" class="message"></p>
   </div>
 
-  <!-- STAFF APP -->
-  <div id="app" class="hidden">
+  <!-- STAFF DASHBOARD -->
+  <div class="card" id="app">
+    <h3 id="welcome">Welcome</h3>
+    <p id="todayDate" class="subtitle"></p>
 
-    <div class="card">
-      <h2 id="welcome">Welcome</h2>
-      <p id="todayDate"></p>
+    <button onclick="checkIn()">CHECK IN</button>
+    <button class="checkout" onclick="checkOut()">CHECK OUT</button>
 
-      <div class="buttons">
-        <button class="green" id="checkInButton" onclick="checkIn()">
-          Check In
-        </button>
+    <p id="attendanceMessage" class="message"></p>
 
-        <button class="red" id="checkOutButton" onclick="checkOut()">
-          Check Out
-        </button>
-
-        <button class="gray" onclick="logout()">Logout</button>
-      </div>
-
-      <div id="attendanceMessage" class="message">
-        Ready for attendance.
-      </div>
-
-      <p class="small">
-        Attendance is permitted only within 200 meters of the hospital GPS point.
-      </p>
-    </div>
-
-    <!-- ADMIN -->
-    <div id="admin" class="card hidden">
-      <h2>Admin Dashboard</h2>
-
-      <button onclick="loadRecords()">Refresh Attendance Records</button>
-
-      <hr>
-
-      <h3>Search Staff</h3>
-      <input id="searchName" type="text"
-        placeholder="Search staff name"
-        oninput="filterRecords()">
-
-      <h3>Daily Report</h3>
-      <input id="dailyDate" type="date" onchange="filterRecords()">
-
-      <h3>Monthly Report</h3>
-      <input id="monthlyDate" type="month" onchange="filterRecords()">
-
-      <h3 id="recordCount">Total records: 0</h3>
-
-      <div id="records">No records loaded.</div>
-    </div>
-
+    <button class="logout" onclick="logout()">Logout</button>
   </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div class="card" id="admin">
+    <h3>Admin Dashboard</h3>
+
+    <input
+      id="searchName"
+      placeholder="Search Staff Name"
+      oninput="filterRecords()"
+    >
+
+    <label>Daily Report</label>
+    <input
+      id="dailyDate"
+      type="date"
+      onchange="filterRecords()"
+    >
+
+    <label>Monthly Report</label>
+    <input
+      id="monthlyDate"
+      type="month"
+      onchange="filterRecords()"
+    >
+
+    <p id="recordCount" class="message"></p>
+    <div id="records">Loading records...</div>
+  </div>
+
 </div>
 
 <!-- FIREBASE -->
@@ -191,10 +140,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-
   // FIREBASE CONFIGURATION
   firebase.initializeApp({
-    apiKey: "AIzaSyD5TkKX68UjpPNLxOi3tttorLDOrYl4UMo",
+    apiKey: "AIzaSyD5TkXK68UjpPNLxOi3tttorLDOrYl4UMo",
     authDomain: "latif-hospital-attendance.firebaseapp.com",
     projectId: "latif-hospital-attendance",
     storageBucket: "latif-hospital-attendance.firebasestorage.app",
@@ -206,41 +154,37 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  let currentUser = null;
   let staff = null;
+  let currentUser = null;
   let allRecords = [];
-
-  // PAKISTAN DATE
-  function pakistanDate() {
-    const parts = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Karachi",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).formatToParts(new Date());
-
-    const p = {};
-    parts.forEach(x => p[x.type] = x.value);
-
-    return p.year + "-" + p.month + "-" + p.day;
-  }
-
-  // PAKISTAN TIME
-  function pakistanTime() {
-    return new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Karachi",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false
-    }).format(new Date());
-  }
 
   // HOSPITAL GPS LOCATION
   const HOSPITAL_LAT = 31.796576833446725;
   const HOSPITAL_LNG = 74.25336237431742;
 
+  // ATTENDANCE ALLOWED RADIUS
   const ALLOWED_RADIUS = 200;
+
+  // PAKISTAN DATE
+  function pakistanDate() {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Karachi",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date());
+  }
+
+  // PAKISTAN TIME
+  function pakistanTime() {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Karachi",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true
+    }).format(new Date());
+  }
 
   // GPS DISTANCE CALCULATION
   function distanceInMeters(lat1, lon1, lat2, lon2) {
@@ -281,19 +225,21 @@
           const longitude = position.coords.longitude;
           const accuracy = position.coords.accuracy;
 
-          if (accuracy > 200) {
-            message.innerText =
-              "GPS accuracy is too low. Please try again in an open area.";
-            resolve(false);
-            return;
-          }
-
           const distance = distanceInMeters(
             latitude,
             longitude,
             HOSPITAL_LAT,
             HOSPITAL_LNG
           );
+
+          if (accuracy > 200) {
+            message.innerText =
+              "GPS accuracy is too low: " +
+              Math.round(accuracy) +
+              " meters. Please try again.";
+            resolve(false);
+            return;
+          }
 
           if (distance <= ALLOWED_RADIUS) {
             message.innerText =
@@ -304,7 +250,9 @@
 
           } else {
             message.innerText =
-              "You are outside the hospital's 200-meter area. Attendance not allowed.";
+              "GPS Distance: " + Math.round(distance) +
+              " meters. GPS Accuracy: " +
+              Math.round(accuracy) + " meters.";
 
             resolve(false);
           }
@@ -313,7 +261,6 @@
         error => {
           message.innerText =
             "Please enable phone location and allow website GPS permission.";
-
           resolve(false);
         },
 
@@ -347,18 +294,33 @@
       const result =
         await auth.signInWithEmailAndPassword(email, password);
 
-      const uid = result.user.uid;
+      await loadUserProfile(result.user);
 
-      const doc = await db.collection("STAFF").doc(uid).get();
+    } catch (error) {
+      msg.innerText = "Error: " + error.message;
+      console.error(error);
+
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  // LOAD STAFF PROFILE
+  async function loadUserProfile(user) {
+
+    const msg = document.getElementById("message");
+
+    try {
+      const doc = await db.collection("STAFF").doc(user.uid).get();
 
       if (!doc.exists) {
-        msg.innerText = "Staff profile not found. UID: " + uid;
+        msg.innerText = "Staff profile not found.";
         await auth.signOut();
         return;
       }
 
       staff = doc.data();
-      currentUser = result.user;
+      currentUser = user;
 
       document.getElementById("login").style.display = "none";
       document.getElementById("app").style.display = "block";
@@ -375,11 +337,8 @@
       }
 
     } catch (error) {
-      msg.innerText = "Error: " + error.message;
+      msg.innerText = "Profile Error: " + error.message;
       console.error(error);
-
-    } finally {
-      button.disabled = false;
     }
   }
 
@@ -395,11 +354,9 @@
       if (!locationAllowed) return;
 
       const date = pakistanDate();
-
       const recordId = currentUser.uid + "_" + date;
 
       const ref = db.collection("attendance").doc(recordId);
-
       const existing = await ref.get();
 
       if (existing.exists) {
@@ -441,11 +398,9 @@
       if (!locationAllowed) return;
 
       const date = pakistanDate();
-
       const recordId = currentUser.uid + "_" + date;
 
       const ref = db.collection("attendance").doc(recordId);
-
       const existing = await ref.get();
 
       if (!existing.exists) {
@@ -498,7 +453,6 @@
     } catch (error) {
       output.innerText =
         "Could not load records: " + error.message;
-
       console.error(error);
     }
   }
@@ -557,9 +511,7 @@
 
       const status = document.createElement("p");
       status.className = "small";
-
-      status.textContent =
-        "Status: " + (record.status || "Present");
+      status.textContent = "Status: " + (record.status || "Present");
 
       div.appendChild(name);
       div.appendChild(details);
@@ -571,15 +523,20 @@
 
   // LOGOUT
   async function logout() {
-
     try {
       await auth.signOut();
       location.reload();
-
     } catch (error) {
       alert(error.message);
     }
   }
+
+  // RESTORE LOGIN SESSION
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      await loadUserProfile(user);
+    }
+  });
 
 </script>
 
