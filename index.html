@@ -352,11 +352,6 @@ async function markAttendance(action) {
         " meters. Please try again in an open area."
       );
     }
-
-    if (distance > ALLOWED_RADIUS) {
-      throw new Error(
-        "You are approximately " + Math.round(distance) +
-        " meters from the hospital location. Allowed distance is 200 meters."
       );
     }
 
