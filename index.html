@@ -2,543 +2,506 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Latif Hospital Attendance</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Latif Hospital Attendance</title>
 
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      color: #172033;
-    }
-    .container {
-      max-width: 700px;
-      margin: 25px auto;
-    }
-    .card {
-      background: white;
-      padding: 22px;
-      margin-bottom: 18px;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px #00000012;
-    }
-    h2, h3 { text-align: center; }
-    .subtitle {
-      text-align: center;
-      color: #64748b;
-      font-size: 14px;
-    }
-    input, button {
-      width: 100%;
-      padding: 13px;
-      margin: 8px 0;
-      border-radius: 7px;
-      font-size: 16px;
-    }
-    input { border: 1px solid #cbd5e1; }
-    button {
-      border: none;
-      background: #087c58;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:disabled { opacity: .6; }
-    .checkout { background: #2563eb; }
-    .logout { background: #dc2626; }
-    .record {
-      padding: 12px;
-      margin: 10px 0;
-      background: #f1f5f9;
-      border-radius: 8px;
-      overflow-wrap: anywhere;
-    }
-    .message {
-      text-align: center;
-      font-weight: bold;
-      color: #075985;
-      overflow-wrap: anywhere;
-    }
-    .small {
-      color: #64748b;
-      font-size: 13px;
-    }
-    #app, #admin { display: none; }
-  </style>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #eef3f8;
+  color: #172b4d;
+}
+.container {
+  max-width: 950px;
+  margin: 25px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 3px 15px #00000015;
+}
+h1, h2 { text-align: center; color: #075985; }
+.subtitle { text-align: center; color: #526477; }
+input, button, select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 7px;
+  border: 1px solid #cbd5e1;
+  font-size: 16px;
+}
+button {
+  background: #087e8b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+button:hover { background: #06616b; }
+button:disabled { opacity: .6; cursor: wait; }
+.logout { background: #b42318; }
+.checkin { background: #16803c; }
+.checkout { background: #d97706; }
+.hidden { display: none !important; }
+.message {
+  padding: 12px;
+  margin: 12px 0;
+  border-radius: 7px;
+  background: #e0f2fe;
+  overflow-wrap: anywhere;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+}
+th, td {
+  padding: 9px;
+  border: 1px solid #dbe2ea;
+  text-align: left;
+}
+th { background: #e0f2fe; }
+.table-wrap { overflow-x: auto; }
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.stat {
+  flex: 1;
+  min-width: 120px;
+  padding: 14px;
+  background: #e0f2fe;
+  border-radius: 8px;
+  text-align: center;
+}
+.small { font-size: 13px; color: #64748b; }
+</style>
 </head>
 
 <body>
 <div class="container">
+  <h1>Latif Orthopedic Hospital</h1>
+  <p class="subtitle">Physiotherapy Center — Muridke</p>
+  <p class="subtitle" id="clock"></p>
 
-  <div class="card">
-    <h2>Latif Orthopedic Hospital</h2>
-    <p class="subtitle">Physiotherapy Center - Muridke</p>
-    <p class="subtitle">Staff Attendance Management System</p>
+  <div id="loginSection">
+    <h2>Staff Login</h2>
+    <input id="email" type="email" placeholder="Email address">
+    <input id="password" type="password" placeholder="Password">
+    <button id="loginBtn" onclick="login()">Login</button>
+    <div id="loginMessage" class="message hidden"></div>
   </div>
 
-  <!-- LOGIN -->
-  <div class="card" id="login">
-    <h3>Staff Login</h3>
-
-    <input id="email" type="email" placeholder="Enter Email">
-    <input id="password" type="password" placeholder="Enter Password">
-
-    <button id="loginButton" onclick="login()">Login</button>
-    <p id="message" class="message"></p>
-  </div>
-
-  <!-- STAFF DASHBOARD -->
-  <div class="card" id="app">
-    <h3 id="welcome">Welcome</h3>
-    <p id="todayDate" class="subtitle"></p>
-
-    <button onclick="checkIn()">CHECK IN</button>
-    <button class="checkout" onclick="checkOut()">CHECK OUT</button>
-
-    <p id="attendanceMessage" class="message"></p>
-
+  <div id="staffSection" class="hidden">
+    <h2 id="welcome"></h2>
+    <p class="subtitle">Attendance Panel</p>
+    <div id="attendanceMessage" class="message">
+      Please allow location access when asked.
+    </div>
+    <button class="checkin" id="checkInBtn" onclick="markAttendance('in')">
+      CHECK IN
+    </button>
+    <button class="checkout" id="checkOutBtn" onclick="markAttendance('out')">
+      CHECK OUT
+    </button>
+    <button onclick="loadMyAttendance()">My Attendance</button>
+    <div id="myRecords"></div>
     <button class="logout" onclick="logout()">Logout</button>
   </div>
 
-  <!-- ADMIN DASHBOARD -->
-  <div class="card" id="admin">
-    <h3>Admin Dashboard</h3>
+  <div id="adminSection" class="hidden">
+    <h2>Admin Dashboard</h2>
+    <div class="stats">
+      <div class="stat"><b id="totalRecords">0</b><br>Total Records</div>
+      <div class="stat"><b id="presentToday">0</b><br>Today's Check-ins</div>
+    </div>
 
-    <input
-      id="searchName"
-      placeholder="Search Staff Name"
-      oninput="filterRecords()"
-    >
+    <input id="searchStaff" placeholder="Search staff name..."
+      oninput="renderAdminRecords()">
 
     <label>Daily Report</label>
-    <input
-      id="dailyDate"
-      type="date"
-      onchange="filterRecords()"
-    >
+    <input type="date" id="filterDay" onchange="renderAdminRecords()">
 
     <label>Monthly Report</label>
-    <input
-      id="monthlyDate"
-      type="month"
-      onchange="filterRecords()"
-    >
+    <input type="month" id="filterMonth" onchange="renderAdminRecords()">
 
-    <p id="recordCount" class="message"></p>
-    <div id="records">Loading records...</div>
+    <button onclick="clearFilters()">Clear Filters</button>
+    <button onclick="loadAdminRecords()">Refresh Records</button>
+
+    <div id="adminMessage" class="message hidden"></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Check In</th>
+            <th>Check Out</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="recordsBody"></tbody>
+      </table>
+    </div>
+    <button class="logout" onclick="logout()">Logout</button>
   </div>
-
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-  // FIREBASE CONFIGURATION
-  firebase.initializeApp({
-    apiKey: AIzaSyBunC8KPG1ZXSLkpS-B3jq02sFTs_uU4fQ
-    authDomain: "latif-hospital-attendance.firebaseapp.com",
-    projectId: "latif-hospital-attendance",
-    storageBucket: "latif-hospital-attendance.firebasestorage.app",
-    messagingSenderId: "197742542724",
-    appId: "1:197742542724:web:9f9903c333c7b3981ba7d1",
-    measurementId: "G-EZW9BYGNW4"
-  });
+const firebaseConfig = {
+  apiKey: "AIzaSyBunC8KPG1ZXSLkpS-B3jq02sFTs_uU4fQ",
+  authDomain: "latif-hospital-attendance.firebaseapp.com",
+  projectId: "latif-hospital-attendance",
+  storageBucket: "latif-hospital-attendance.firebasestorage.app",
+  messagingSenderId: "197742542724",
+  appId: "1:197742542724:web:9f9903c333c7b3981ba7d1",
+  measurementId: "G-EZW9BYGNW4"
+};
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  let staff = null;
-  let currentUser = null;
-  let allRecords = [];
+const HOSPITAL_LAT = 31.796576833446725;
+const HOSPITAL_LNG = 74.25336237431742;
+const ALLOWED_RADIUS = 200;
 
-  // HOSPITAL GPS LOCATION
-  const HOSPITAL_LAT = 31.796576833446725;
-  const HOSPITAL_LNG = 74.25336237431742;
+let currentUser = null;
+let currentStaff = null;
+let adminRecords = [];
 
-  // ATTENDANCE ALLOWED RADIUS
-  const ALLOWED_RADIUS = 200;
+function pakistanDate() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Karachi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
 
-  // PAKISTAN DATE
-  function pakistanDate() {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Karachi",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(new Date());
+function pakistanTime() {
+  return new Intl.DateTimeFormat("en-PK", {
+    timeZone: "Asia/Karachi",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  }).format(new Date());
+}
+
+function updateClock() {
+  document.getElementById("clock").textContent =
+    "Pakistan Date: " + pakistanDate() + " | Time: " + pakistanTime();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function showMessage(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.classList.remove("hidden");
+}
+
+function hideMessage(id) {
+  document.getElementById(id).classList.add("hidden");
+}
+
+function setBusy(busy) {
+  document.getElementById("loginBtn").disabled = busy;
+  document.getElementById("checkInBtn").disabled = busy;
+  document.getElementById("checkOutBtn").disabled = busy;
+}
+
+async function login() {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    showMessage("loginMessage", "Please enter email and password.");
+    return;
   }
 
-  // PAKISTAN TIME
-  function pakistanTime() {
-    return new Intl.DateTimeFormat("en-US", {
-      timeZone: "Asia/Karachi",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: true
-    }).format(new Date());
+  setBusy(true);
+  hideMessage("loginMessage");
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (error) {
+    showMessage("loginMessage", "Login error: " + error.message);
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function logout() {
+  await auth.signOut();
+}
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  currentStaff = null;
+  adminRecords = [];
+
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("staffSection").classList.add("hidden");
+  document.getElementById("adminSection").classList.add("hidden");
+
+  if (!user) {
+    document.getElementById("loginSection").classList.remove("hidden");
+    return;
   }
 
-  // GPS DISTANCE CALCULATION
-  function distanceInMeters(lat1, lon1, lat2, lon2) {
-    const R = 6371000;
-    const toRad = value => value * Math.PI / 180;
+  try {
+    const doc = await db.collection("STAFF").doc(user.uid).get();
 
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
+    if (!doc.exists) {
+      await auth.signOut();
+      showMessage("loginMessage", "Staff profile not found. Please contact admin.");
+      return;
+    }
 
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) ** 2;
+    currentStaff = doc.data();
 
-    return 2 * R * Math.atan2(
-      Math.sqrt(a),
-      Math.sqrt(1 - a)
+    if (currentStaff.role === "admin") {
+      document.getElementById("adminSection").classList.remove("hidden");
+      await loadAdminRecords();
+    } else {
+      document.getElementById("staffSection").classList.remove("hidden");
+      document.getElementById("welcome").textContent =
+        "Welcome, " + (currentStaff.name || "Staff");
+      await loadMyAttendance();
+    }
+  } catch (error) {
+    await auth.signOut();
+    document.getElementById("loginSection").classList.remove("hidden");
+    showMessage("loginMessage", "Account error: " + error.message);
+  }
+});
+
+function distanceInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = value => value * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getHospitalLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Your browser does not support GPS."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      position => resolve(position),
+      error => {
+        let msg = "GPS error.";
+        if (error.code === 1) msg = "Location permission denied. Please allow location.";
+        if (error.code === 2) msg = "Your location is unavailable. Try again outside.";
+        if (error.code === 3) msg = "GPS timed out. Please try again.";
+        reject(new Error(msg));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
     );
-  }
+  });
+}
 
-  // VERIFY HOSPITAL LOCATION
-  function verifyHospitalLocation(message) {
-    return new Promise(resolve => {
+async function markAttendance(action) {
+  if (!currentUser || !currentStaff) return;
 
-      if (!navigator.geolocation) {
-        message.innerText = "GPS is not supported on this device.";
-        resolve(false);
-        return;
-      }
+  const messageId = "attendanceMessage";
+  const date = pakistanDate();
+  const recordId = currentUser.uid + "_" + date;
+  const recordRef = db.collection("attendance").doc(recordId);
 
-      message.innerText = "Checking your GPS location...";
+  setBusy(true);
+  showMessage(messageId, "Checking your GPS location... Please wait.");
 
-      navigator.geolocation.getCurrentPosition(
-        position => {
+  try {
+    const position = await getHospitalLocation();
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
 
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          const accuracy = position.coords.accuracy;
+    const distance = distanceInMeters(
+      lat, lng, HOSPITAL_LAT, HOSPITAL_LNG
+    );
 
-          const distance = distanceInMeters(
-            latitude,
-            longitude,
-            HOSPITAL_LAT,
-            HOSPITAL_LNG
-          );
-
-          if (accuracy > 200) {
-            message.innerText =
-              "GPS accuracy is too low: " +
-              Math.round(accuracy) +
-              " meters. Please try again.";
-            resolve(false);
-            return;
-          }
-
-          if (distance <= ALLOWED_RADIUS) {
-            message.innerText =
-              "Hospital location verified. Distance: " +
-              Math.round(distance) + " meters.";
-
-            resolve(true);
-
-          } else {
-            message.innerText =
-              "GPS Distance: " + Math.round(distance) +
-              " meters. GPS Accuracy: " +
-              Math.round(accuracy) + " meters.";
-
-            resolve(false);
-          }
-        },
-
-        error => {
-          message.innerText =
-            "Please enable phone location and allow website GPS permission.";
-          resolve(false);
-        },
-
-        {
-          enableHighAccuracy: true,
-          timeout: 20000,
-          maximumAge: 0
-        }
+    if (accuracy > 200) {
+      throw new Error(
+        "GPS accuracy is " + Math.round(accuracy) +
+        " meters. Please try again in an open area."
       );
-    });
-  }
-
-  // LOGIN
-  async function login() {
-
-    const msg = document.getElementById("message");
-    const button = document.getElementById("loginButton");
-
-    try {
-      button.disabled = true;
-      msg.innerText = "Logging in...";
-
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        msg.innerText = "Please enter email and password.";
-        return;
-      }
-
-      const result =
-        await auth.signInWithEmailAndPassword(email, password);
-
-      await loadUserProfile(result.user);
-
-    } catch (error) {
-      msg.innerText = "Error: " + error.message;
-      console.error(error);
-
-    } finally {
-      button.disabled = false;
     }
-  }
 
-  // LOAD STAFF PROFILE
-  async function loadUserProfile(user) {
-
-    const msg = document.getElementById("message");
-
-    try {
-      const doc = await db.collection("STAFF").doc(user.uid).get();
-
-      if (!doc.exists) {
-        msg.innerText = "Staff profile not found.";
-        await auth.signOut();
-        return;
-      }
-
-      staff = doc.data();
-      currentUser = user;
-
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-
-      document.getElementById("welcome").innerText =
-        "Welcome, " + (staff.name || "Staff");
-
-      document.getElementById("todayDate").innerText =
-        "Date: " + pakistanDate();
-
-      if (staff.role === "admin") {
-        document.getElementById("admin").style.display = "block";
-        await loadRecords();
-      }
-
-    } catch (error) {
-      msg.innerText = "Profile Error: " + error.message;
-      console.error(error);
+    if (distance > ALLOWED_RADIUS) {
+      throw new Error(
+        "You are approximately " + Math.round(distance) +
+        " meters from the hospital location. Allowed distance is 200 meters."
+      );
     }
-  }
 
-  // CHECK IN
-  async function checkIn() {
+    const snapshot = await recordRef.get();
+    const now = pakistanTime();
 
-    const msg = document.getElementById("attendanceMessage");
-
-    try {
-      if (!currentUser) return;
-
-      const locationAllowed = await verifyHospitalLocation(msg);
-      if (!locationAllowed) return;
-
-      const date = pakistanDate();
-      const recordId = currentUser.uid + "_" + date;
-
-      const ref = db.collection("attendance").doc(recordId);
-      const existing = await ref.get();
-
-      if (existing.exists) {
-        msg.innerText = "You have already checked in today.";
-        return;
+    if (action === "in") {
+      if (snapshot.exists) {
+        throw new Error("You have already checked in today.");
       }
 
-      await ref.set({
+      await recordRef.set({
         uid: currentUser.uid,
-        name: staff.name || "Staff",
+        name: currentStaff.name || "Staff",
         date: date,
-        checkIn: pakistanTime(),
+        checkIn: now,
         checkOut: "",
         status: "Present",
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      msg.innerText = "Check In successful!";
-
-      if (staff.role === "admin") {
-        await loadRecords();
+      showMessage(messageId, "Check In successful! Time: " + now);
+    } else {
+      if (!snapshot.exists) {
+        throw new Error("Please Check In first.");
       }
 
-    } catch (error) {
-      msg.innerText = "Error: " + error.message;
-      console.error(error);
-    }
-  }
-
-  // CHECK OUT
-  async function checkOut() {
-
-    const msg = document.getElementById("attendanceMessage");
-
-    try {
-      if (!currentUser) return;
-
-      const locationAllowed = await verifyHospitalLocation(msg);
-      if (!locationAllowed) return;
-
-      const date = pakistanDate();
-      const recordId = currentUser.uid + "_" + date;
-
-      const ref = db.collection("attendance").doc(recordId);
-      const existing = await ref.get();
-
-      if (!existing.exists) {
-        msg.innerText = "Please Check In first.";
-        return;
+      if (snapshot.data().checkOut) {
+        throw new Error("You have already checked out today.");
       }
 
-      if (existing.data().checkOut) {
-        msg.innerText = "You have already checked out today.";
-        return;
-      }
-
-      await ref.update({
-        checkOut: pakistanTime(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      await recordRef.update({
+        checkOut: now,
+        status: "Completed"
       });
 
-      msg.innerText = "Check Out successful!";
-
-      if (staff.role === "admin") {
-        await loadRecords();
-      }
-
-    } catch (error) {
-      msg.innerText = "Error: " + error.message;
-      console.error(error);
+      showMessage(messageId, "Check Out successful! Time: " + now);
     }
+
+    await loadMyAttendance();
+  } catch (error) {
+    showMessage(messageId, error.message);
+  } finally {
+    setBusy(false);
   }
+}
 
-  // ADMIN RECORDS
-  async function loadRecords() {
+async function loadMyAttendance() {
+  if (!currentUser) return;
 
-    const output = document.getElementById("records");
-    output.innerText = "Loading records...";
+  const area = document.getElementById("myRecords");
+  area.textContent = "Loading attendance...";
 
-    try {
-      const snapshot = await db.collection("attendance")
-        .orderBy("date", "desc")
-        .limit(300)
-        .get();
+  try {
+    const snapshot = await db.collection("attendance")
+      .where("uid", "==", currentUser.uid)
+      .get();
 
-      allRecords = [];
+    const rows = [];
+    snapshot.forEach(doc => rows.push(doc.data()));
+    rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
-      snapshot.forEach(doc => {
-        allRecords.push(doc.data());
-      });
+    let html = "<h3>My Attendance</h3><div class='table-wrap'><table>" +
+      "<tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>";
 
-      filterRecords();
-
-    } catch (error) {
-      output.innerText =
-        "Could not load records: " + error.message;
-      console.error(error);
-    }
-  }
-
-  // SEARCH AND REPORT FILTERS
-  function filterRecords() {
-
-    const search =
-      document.getElementById("searchName").value
-        .trim().toLowerCase();
-
-    const daily =
-      document.getElementById("dailyDate").value;
-
-    const monthly =
-      document.getElementById("monthlyDate").value;
-
-    const filtered = allRecords.filter(record => {
-
-      const name = (record.name || "").toLowerCase();
-
-      const matchesName = name.includes(search);
-      const matchesDay = !daily || record.date === daily;
-
-      const matchesMonth = !monthly ||
-        (record.date || "").startsWith(monthly);
-
-      return matchesName && matchesDay && matchesMonth;
+    rows.slice(0, 100).forEach(r => {
+      html += "<tr><td>" + safe(r.date) + "</td><td>" +
+        safe(r.checkIn) + "</td><td>" + safe(r.checkOut) +
+        "</td><td>" + safe(r.status) + "</td></tr>";
     });
 
-    document.getElementById("recordCount").innerText =
-      "Total records: " + filtered.length;
-
-    const output = document.getElementById("records");
-    output.innerHTML = "";
-
-    if (filtered.length === 0) {
-      output.innerText = "No attendance records found.";
-      return;
-    }
-
-    filtered.forEach(record => {
-
-      const div = document.createElement("div");
-      div.className = "record";
-
-      const name = document.createElement("strong");
-      name.textContent = record.name || "Staff";
-
-      const details = document.createElement("p");
-
-      details.textContent =
-        "Date: " + (record.date || "") +
-        " | Check In: " + (record.checkIn || "Not checked in") +
-        " | Check Out: " + (record.checkOut || "Not checked out");
-
-      const status = document.createElement("p");
-      status.className = "small";
-      status.textContent = "Status: " + (record.status || "Present");
-
-      div.appendChild(name);
-      div.appendChild(details);
-      div.appendChild(status);
-
-      output.appendChild(div);
-    });
+    area.innerHTML = html + "</table></div>";
+  } catch (error) {
+    area.textContent = "Could not load records: " + error.message;
   }
+}
 
-  // LOGOUT
-  async function logout() {
-    try {
-      await auth.signOut();
-      location.reload();
-    } catch (error) {
-      alert(error.message);
-    }
+async function loadAdminRecords() {
+  const message = document.getElementById("adminMessage");
+  message.classList.remove("hidden");
+  message.textContent = "Loading attendance records...";
+
+  try {
+    const snapshot = await db.collection("attendance")
+      .orderBy("date", "desc")
+      .limit(500)
+      .get();
+
+    adminRecords = [];
+    snapshot.forEach(doc => adminRecords.push(doc.data()));
+
+    message.textContent = "Records loaded successfully.";
+    renderAdminRecords();
+  } catch (error) {
+    message.textContent = "Records error: " + error.message;
   }
+}
 
-  // RESTORE LOGIN SESSION
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      await loadUserProfile(user);
-    }
+function renderAdminRecords() {
+  const search = document.getElementById("searchStaff").value
+    .trim().toLowerCase();
+  const day = document.getElementById("filterDay").value;
+  const month = document.getElementById("filterMonth").value;
+
+  const filtered = adminRecords.filter(r => {
+    const nameMatch = (r.name || "").toLowerCase().includes(search);
+    const dayMatch = !day || r.date === day;
+    const monthMatch = !month || (r.date || "").startsWith(month);
+    return nameMatch && dayMatch && monthMatch;
   });
 
-</script>
+  document.getElementById("totalRecords").textContent = adminRecords.length;
+  document.getElementById("presentToday").textContent =
+    adminRecords.filter(r => r.date === pakistanDate()).length;
 
+  const body = document.getElementById("recordsBody");
+  body.innerHTML = "";
+
+  filtered.forEach(r => {
+    const tr = document.createElement("tr");
+    [r.name, r.date, r.checkIn, r.checkOut, r.status].forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value || "";
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+  if (filtered.length === 0) {
+    body.innerHTML = "<tr><td colspan='5'>No attendance records found.</td></tr>";
+  }
+}
+
+function clearFilters() {
+  document.getElementById("searchStaff").value = "";
+  document.getElementById("filterDay").value = "";
+  document.getElementById("filterMonth").value = "";
+  renderAdminRecords();
+}
+
+function safe(value) {
+  const div = document.createElement("div");
+  div.textContent = value || "";
+  return div.innerHTML;
+}
+</script>
 </body>
 </html>
