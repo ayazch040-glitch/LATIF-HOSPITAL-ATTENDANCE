@@ -7,18 +7,16 @@
 <title>Latif Hospital Attendance</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:15px;background:#eef3f8;font-family:Arial,sans-serif;color:#17324d}
-.container{max-width:950px;margin:20px auto;background:white;padding:22px;border-radius:12px;box-shadow:0 3px 15px #0002}
+body{font-family:Arial,sans-serif;background:#eef3f8;margin:0;padding:15px;color:#17324d}
+.container{max-width:900px;margin:20px auto;background:white;padding:22px;border-radius:12px;box-shadow:0 3px 15px #0002}
 h1,h2{text-align:center;color:#087e8b}
 .subtitle{text-align:center;color:#64748b}
 input,button{width:100%;padding:13px;margin:8px 0;border:1px solid #ccd5df;border-radius:7px;font-size:16px}
 button{background:#087e8b;color:white;border:0;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5}
-.green{background:#16803c}
-.orange{background:#d97706}
-.red{background:#b42318}
-.message{padding:12px;margin:10px 0;background:#e0f2fe;border-radius:7px;overflow-wrap:anywhere}
+.green{background:#16803c}.orange{background:#d97706}.red{background:#b42318}
 .hidden{display:none!important}
+.message{padding:12px;margin:10px 0;background:#e0f2fe;border-radius:7px;overflow-wrap:anywhere}
 .tablewrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;margin-top:15px;font-size:14px}
 td,th{border:1px solid #ddd;padding:9px;text-align:left}
@@ -31,18 +29,18 @@ th{background:#e0f2fe}
 <div class="container">
 <h1>Latif Orthopedic Hospital</h1>
 <p class="subtitle">Physiotherapy Center — Muridke</p>
-<p class="subtitle" id="clock">Pakistan Time</p>
+<p class="subtitle" id="clock"></p>
 
 <div id="loginSection">
-<h2>Login</h2>
+<h2>Staff Login</h2>
 <input id="email" type="email" placeholder="Email Address">
 <input id="password" type="password" placeholder="Password">
 <button id="loginBtn" onclick="login()">LOGIN</button>
-<div id="loginMessage" class="message">Please enter your login details.</div>
+<div id="loginMessage" class="message">Enter your email and password.</div>
 </div>
 
 <div id="staffSection" class="hidden">
-<h2 id="welcome">Welcome</h2>
+<h2 id="welcome"></h2>
 <div id="attendanceMessage" class="message">Attendance Panel</div>
 <button class="green" id="inBtn" onclick="markAttendance('in')">CHECK IN</button>
 <button class="orange" id="outBtn" onclick="markAttendance('out')">CHECK OUT</button>
@@ -80,288 +78,277 @@ th{background:#e0f2fe}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-(function(){
-"use strict";
-
-const config = {
- apiKey:"AIzaSyBunC8KPG1ZXSLkpS-B3jq02sFTs_uU4fQ",
- authDomain:"latif-hospital-attendance.firebaseapp.com",
- projectId:"latif-hospital-attendance",
- storageBucket:"latif-hospital-attendance.firebasestorage.app",
- messagingSenderId:"197742542724",
- appId:"1:197742542724:web:9f9903c333c7b3981ba7d1",
- measurementId:"G-EZW9BYGNW4"
+const firebaseConfig = {
+  apiKey: "AIzaSyBunC8KPG1ZXSLkpS-B3jq02sFTs_uU4fQ",
+  authDomain: "latif-hospital-attendance.firebaseapp.com",
+  projectId: "latif-hospital-attendance",
+  storageBucket: "latif-hospital-attendance.firebasestorage.app",
+  messagingSenderId: "197742542724",
+  appId: "1:197742542724:web:9f9903c333c7b3981ba7d1",
+  measurementId: "G-EZW9BYGNW4"
 };
 
-let auth, db, user=null, staff=null, records=[];
+let auth, db, currentUser=null, currentStaff=null, records=[];
 
-function message(id,text){
- const el=document.getElementById(id);
- el.textContent=text;
- el.classList.remove("hidden");
+function showMessage(id,text){
+  const el=document.getElementById(id);
+  el.textContent=text;
+  el.classList.remove("hidden");
 }
 
 function datePK(){
- return new Intl.DateTimeFormat("en-CA",{
-  timeZone:"Asia/Karachi",year:"numeric",month:"2-digit",day:"2-digit"
- }).format(new Date());
+  return new Intl.DateTimeFormat("en-CA",{
+    timeZone:"Asia/Karachi",year:"numeric",month:"2-digit",day:"2-digit"
+  }).format(new Date());
 }
 
 function timePK(){
- return new Intl.DateTimeFormat("en-PK",{
-  timeZone:"Asia/Karachi",hour:"2-digit",minute:"2-digit",
-  second:"2-digit",hour12:true
- }).format(new Date());
+  return new Intl.DateTimeFormat("en-PK",{
+    timeZone:"Asia/Karachi",hour:"2-digit",minute:"2-digit",
+    second:"2-digit",hour12:true
+  }).format(new Date());
 }
 
-function clock(){
- document.getElementById("clock").textContent =
- "Pakistan Date: "+datePK()+" | Time: "+timePK();
+function updateClock(){
+  document.getElementById("clock").textContent =
+    "Pakistan Date: "+datePK()+" | Time: "+timePK();
 }
-clock();
-setInterval(clock,1000);
+updateClock();
+setInterval(updateClock,1000);
 
 function showSection(id){
- ["loginSection","staffSection","adminSection"].forEach(x=>
-  document.getElementById(x).classList.add("hidden")
- );
- document.getElementById(id).classList.remove("hidden");
+  ["loginSection","staffSection","adminSection"].forEach(x=>
+    document.getElementById(x).classList.add("hidden")
+  );
+  document.getElementById(id).classList.remove("hidden");
 }
 
 window.login=async function(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- const btn=document.getElementById("loginBtn");
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+  const btn=document.getElementById("loginBtn");
 
- if(!email||!password){
-  message("loginMessage","Email aur password enter karein.");
-  return;
- }
+  if(!email||!password){
+    showMessage("loginMessage","Email aur password enter karein.");
+    return;
+  }
 
- btn.disabled=true;
- message("loginMessage","Logging in...");
+  btn.disabled=true;
+  showMessage("loginMessage","Logging in...");
 
- try{
-  await auth.signInWithEmailAndPassword(email,password);
- }catch(e){
-  message("loginMessage","Login error: "+e.message);
- }finally{
-  btn.disabled=false;
- }
+  try{
+    await auth.signInWithEmailAndPassword(email,password);
+  }catch(e){
+    showMessage("loginMessage","Login error: "+e.message);
+  }finally{
+    btn.disabled=false;
+  }
 };
 
 window.logout=async function(){
- try{await auth.signOut();}
- catch(e){alert(e.message);}
+  await auth.signOut();
 };
 
 window.markAttendance=async function(action){
- if(!user||!staff)return;
+  if(!currentUser||!currentStaff)return;
 
- const msg=document.getElementById("attendanceMessage");
- const inBtn=document.getElementById("inBtn");
- const outBtn=document.getElementById("outBtn");
- inBtn.disabled=true;
- outBtn.disabled=true;
- msg.textContent="Checking location permission...";
+  const msg=document.getElementById("attendanceMessage");
+  const inBtn=document.getElementById("inBtn");
+  const outBtn=document.getElementById("outBtn");
+  inBtn.disabled=true;
+  outBtn.disabled=true;
 
- try{
-  if(!navigator.geolocation){
-   throw new Error("This browser does not support location.");
+  try{
+    if(!navigator.geolocation)throw new Error("GPS is not supported by this browser.");
+
+    msg.textContent="Please allow location access...";
+
+    await new Promise((resolve,reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve,reject,{
+        enableHighAccuracy:true,timeout:20000,maximumAge:0
+      });
+    });
+
+    const date=datePK();
+    const ref=db.collection("attendance").doc(currentUser.uid+"_"+date);
+    const snap=await ref.get();
+    const now=timePK();
+
+    if(action==="in"){
+      if(snap.exists)throw new Error("Aaj aapka Check In pehle se laga hua hai.");
+
+      await ref.set({
+        uid:currentUser.uid,
+        name:currentStaff.name||"Staff",
+        date:date,
+        checkIn:now,
+        checkOut:"",
+        status:"Present",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      msg.textContent="Check In successful! "+now;
+    }else{
+      if(!snap.exists)throw new Error("Pehle Check In karein.");
+      if(snap.data().checkOut)throw new Error("Check Out pehle ho chuka hai.");
+
+      await ref.update({checkOut:now,status:"Completed"});
+      msg.textContent="Check Out successful! "+now;
+    }
+
+    await loadMyRecords();
+  }catch(e){
+    if(e.code===1){
+      msg.textContent="Location permission allow karein.";
+    }else{
+      msg.textContent="Error: "+e.message;
+    }
+  }finally{
+    inBtn.disabled=false;
+    outBtn.disabled=false;
   }
-
-  await new Promise((resolve,reject)=>{
-   navigator.geolocation.getCurrentPosition(
-    resolve,
-    reject,
-    {enableHighAccuracy:true,timeout:20000,maximumAge:0}
-   );
-  });
-
-  const date=datePK();
-  const id=user.uid+"_"+date;
-  const ref=db.collection("attendance").doc(id);
-  const snap=await ref.get();
-  const now=timePK();
-
-  if(action==="in"){
-   if(snap.exists)throw new Error("Aaj aapka Check In pehle se laga hua hai.");
-
-   await ref.set({
-    uid:user.uid,
-    name:staff.name||"Staff",
-    date:date,
-    checkIn:now,
-    checkOut:"",
-    status:"Present",
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-   });
-
-   msg.textContent="Check In successful! Time: "+now;
-  }else{
-   if(!snap.exists)throw new Error("Pehle Check In karein.");
-   if(snap.data().checkOut)throw new Error("Aapka Check Out pehle ho chuka hai.");
-
-   await ref.update({checkOut:now,status:"Completed"});
-   msg.textContent="Check Out successful! Time: "+now;
-  }
-
-  await loadMyRecords();
- }catch(e){
-  if(e.code==="PERMISSION_DENIED"){
-   msg.textContent="Location permission allow karein.";
-  }else if(e.code===1){
-   msg.textContent="Browser mein location permission allow karein.";
-  }else{
-   msg.textContent="Error: "+e.message;
-  }
- }finally{
-  inBtn.disabled=false;
-  outBtn.disabled=false;
- }
 };
 
 async function loadMyRecords(){
- const area=document.getElementById("myRecords");
- area.textContent="Loading...";
- try{
-  const snap=await db.collection("attendance")
-   .where("uid","==",user.uid).get();
+  const area=document.getElementById("myRecords");
+  area.textContent="Loading...";
+  try{
+    const snap=await db.collection("attendance")
+      .where("uid","==",currentUser.uid).get();
+    const arr=[];
+    snap.forEach(d=>arr.push(d.data()));
+    arr.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
 
-  const arr=[];
-  snap.forEach(d=>arr.push(d.data()));
-  arr.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    const table=document.createElement("table");
+    table.innerHTML="<tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>";
 
-  const table=document.createElement("table");
-  table.innerHTML="<tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr>";
-
-  arr.slice(0,100).forEach(r=>{
-   const tr=document.createElement("tr");
-   [r.date,r.checkIn,r.checkOut,r.status].forEach(v=>{
-    const td=document.createElement("td");
-    td.textContent=v||"";
-    tr.appendChild(td);
-   });
-   table.appendChild(tr);
-  });
-
-  area.replaceChildren(table);
- }catch(e){
-  area.textContent="Attendance load error: "+e.message;
- }
+    arr.slice(0,100).forEach(r=>{
+      const tr=document.createElement("tr");
+      [r.date,r.checkIn,r.checkOut,r.status].forEach(v=>{
+        const td=document.createElement("td");
+        td.textContent=v||"";
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    });
+    area.replaceChildren(table);
+  }catch(e){
+    area.textContent="Records error: "+e.message;
+  }
 }
 
 window.loadAdminRecords=async function(){
- const el=document.getElementById("adminMessage");
- el.textContent="Loading records...";
- try{
-  const snap=await db.collection("attendance").orderBy("date","desc").limit(500).get();
-  records=[];
-  snap.forEach(d=>records.push(d.data()));
-  el.textContent="Records loaded.";
-  renderRecords();
- }catch(e){
-  el.textContent="Admin records error: "+e.message;
- }
+  const el=document.getElementById("adminMessage");
+  el.textContent="Loading records...";
+  try{
+    const snap=await db.collection("attendance")
+      .orderBy("date","desc").limit(500).get();
+    records=[];
+    snap.forEach(d=>records.push(d.data()));
+    el.textContent="Records loaded successfully.";
+    renderRecords();
+  }catch(e){
+    el.textContent="Admin error: "+e.message;
+  }
 };
 
 window.renderRecords=function(){
- const search=document.getElementById("searchStaff").value.toLowerCase().trim();
- const day=document.getElementById("filterDay").value;
- const month=document.getElementById("filterMonth").value;
+  const search=document.getElementById("searchStaff").value.toLowerCase().trim();
+  const day=document.getElementById("filterDay").value;
+  const month=document.getElementById("filterMonth").value;
 
- const filtered=records.filter(r=>
-  (r.name||"").toLowerCase().includes(search)&&
-  (!day||r.date===day)&&
-  (!month||(r.date||"").startsWith(month))
- );
+  const filtered=records.filter(r=>
+    (r.name||"").toLowerCase().includes(search)&&
+    (!day||r.date===day)&&
+    (!month||(r.date||"").startsWith(month))
+  );
 
- document.getElementById("totalRecords").textContent=records.length;
- document.getElementById("presentToday").textContent=
- records.filter(r=>r.date===datePK()).length;
+  document.getElementById("totalRecords").textContent=records.length;
+  document.getElementById("presentToday").textContent=
+    records.filter(r=>r.date===datePK()).length;
 
- const body=document.getElementById("recordsBody");
- body.replaceChildren();
+  const body=document.getElementById("recordsBody");
+  body.replaceChildren();
 
- if(!filtered.length){
-  const tr=document.createElement("tr");
-  const td=document.createElement("td");
-  td.colSpan=5;
-  td.textContent="No records found.";
-  tr.appendChild(td);
-  body.appendChild(tr);
-  return;
- }
+  if(!filtered.length){
+    const tr=document.createElement("tr");
+    const td=document.createElement("td");
+    td.colSpan=5;
+    td.textContent="No records found.";
+    tr.appendChild(td);
+    body.appendChild(tr);
+    return;
+  }
 
- filtered.forEach(r=>{
-  const tr=document.createElement("tr");
-  [r.name,r.date,r.checkIn,r.checkOut,r.status].forEach(v=>{
-   const td=document.createElement("td");
-   td.textContent=v||"";
-   tr.appendChild(td);
+  filtered.forEach(r=>{
+    const tr=document.createElement("tr");
+    [r.name,r.date,r.checkIn,r.checkOut,r.status].forEach(v=>{
+      const td=document.createElement("td");
+      td.textContent=v||"";
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
   });
-  body.appendChild(tr);
- });
 };
 
 window.clearFilters=function(){
- ["searchStaff","filterDay","filterMonth"].forEach(id=>
-  document.getElementById(id).value=""
- );
- renderRecords();
+  ["searchStaff","filterDay","filterMonth"].forEach(id=>
+    document.getElementById(id).value=""
+  );
+  renderRecords();
 };
 
 try{
- if(!window.firebase)throw new Error("Firebase scripts could not load. Internet connection check karein.");
- firebase.initializeApp(config);
- auth=firebase.auth();
- db=firebase.firestore();
+  if(!window.firebase)throw new Error("Firebase scripts load nahi huay. Internet check karein.");
 
- auth.onAuthStateChanged(async u=>{
-  user=u;
-  staff=null;
+  firebase.initializeApp(firebaseConfig);
+  auth=firebase.auth();
+  db=firebase.firestore();
 
-  if(!u){
-   showSection("loginSection");
-   return;
-  }
+  auth.onAuthStateChanged(async user=>{
+    currentUser=user;
+    currentStaff=null;
 
-  try{
-   const profile=await db.collection("STAFF").doc(u.uid).get();
+    if(!user){
+      showSection("loginSection");
+      return;
+    }
 
-   if(!profile.exists){
-    await auth.signOut();
-    message("loginMessage","STAFF profile nahi mila. Admin se rabta karein.");
-    return;
-   }
+    try{
+      const profile=await db.collection("STAFF").doc(user.uid).get();
 
-   staff=profile.data();
+      if(!profile.exists){
+        await auth.signOut();
+        showMessage("loginMessage","STAFF profile nahi mila. Admin se rabta karein.");
+        return;
+      }
 
-   if(staff.role==="admin"){
-    showSection("adminSection");
-    await loadAdminRecords();
-   }else{
-    showSection("staffSection");
-    document.getElementById("welcome").textContent=
-     "Welcome, "+(staff.name||"Staff");
-    await loadMyRecords();
-   }
-  }catch(e){
-   await auth.signOut();
-   showSection("loginSection");
-   message("loginMessage","Account error: "+e.message);
-  }
- });
+      currentStaff=profile.data();
+
+      if(currentStaff.role==="admin"){
+        showSection("adminSection");
+        await loadAdminRecords();
+      }else{
+        showSection("staffSection");
+        document.getElementById("welcome").textContent=
+          "Welcome, "+(currentStaff.name||"Staff");
+        await loadMyRecords();
+      }
+    }catch(e){
+      await auth.signOut();
+      showSection("loginSection");
+      showMessage("loginMessage","Account error: "+e.message);
+    }
+  });
+
 }catch(e){
- showSection("loginSection");
- message("loginMessage","Website setup error: "+e.message);
+  showSection("loginSection");
+  showMessage("loginMessage","Setup error: "+e.message);
 }
 
 window.addEventListener("error",e=>{
- message("loginMessage","Website error: "+e.message);
+  showMessage("loginMessage","Website error: "+e.message);
 });
-
-})();
 </script>
 </body>
 </html>
