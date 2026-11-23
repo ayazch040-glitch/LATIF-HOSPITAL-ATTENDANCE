@@ -6,99 +6,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Latif Hospital Attendance</title>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <style>
     * { box-sizing: border-box; }
+
     body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
       margin: 0;
       padding: 20px;
-      background: #f1f5f9;
-      font-family: Arial, sans-serif;
       color: #1e293b;
     }
+
     .container {
-      max-width: 700px;
-      margin: 25px auto;
+      max-width: 850px;
+      margin: 20px auto;
     }
+
+    .header {
+      background: #075985;
+      color: white;
+      padding: 22px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
     .card {
       background: white;
-      padding: 24px;
-      margin-bottom: 20px;
-      border-radius: 14px;
-      box-shadow: 0 3px 12px #00000012;
+      padding: 22px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.07);
     }
-    h1, h2 { text-align: center; }
-    h1 { color: #087e69; font-size: 25px; }
-    input, button {
+
+    h2 { margin-top: 0; }
+
+    input {
       width: 100%;
       padding: 13px;
-      margin: 8px 0;
-      border-radius: 8px;
+      margin: 8px 0 15px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
       font-size: 16px;
     }
-    input { border: 1px solid #cbd5e1; }
+
     button {
+      padding: 13px 18px;
       border: none;
-      background: #087e69;
+      border-radius: 7px;
+      background: #0284c7;
       color: white;
-      font-weight: bold;
+      font-size: 16px;
       cursor: pointer;
+      margin: 5px;
     }
-    button:disabled { opacity: .5; }
-    .checkout { background: #d97706; }
-    .logout { background: #64748b; }
-    #message { text-align: center; color: #b91c1c; }
-    #app { display: none; }
-    #admin { display: none; }
-    .welcome { text-align: center; font-weight: bold; }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .green { background: #15803d; }
+    .red { background: #dc2626; }
+    .gray { background: #475569; }
+
     .record {
       border: 1px solid #e2e8f0;
-      padding: 12px;
+      padding: 14px;
       border-radius: 8px;
       margin: 10px 0;
+      background: #f8fafc;
+    }
+
+    .message {
+      padding: 12px;
+      margin-top: 12px;
+      background: #f1f5f9;
+      border-radius: 7px;
       overflow-wrap: anywhere;
     }
+
     .small { color: #64748b; font-size: 13px; }
+
+    .hidden { display: none; }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    @media(max-width: 500px) {
+      body { padding: 10px; }
+      .card { padding: 16px; }
+      button { flex: 1; }
+    }
   </style>
 </head>
 
 <body>
+
 <div class="container">
 
-  <div class="card">
-    <h1>LATIF HOSPITAL</h1>
-    <h2>Staff Attendance System</h2>
+  <div class="header">
+    <h1>LATIF ORTHOPEDIC HOSPITAL</h1>
+    <p>Staff Attendance Management System</p>
   </div>
 
-  <div class="card" id="login">
+  <!-- LOGIN -->
+  <div id="login" class="card">
     <h2>Staff Login</h2>
-    <input id="email" type="email" placeholder="Enter email address">
+
+    <label>Email Address</label>
+    <input id="email" type="email" placeholder="Enter your Gmail">
+
+    <label>Password</label>
     <input id="password" type="password" placeholder="Enter password">
-    <button id="loginButton" onclick="login()">LOGIN</button>
-    <p id="message"></p>
+
+    <button id="loginButton" onclick="login()">Login</button>
+
+    <div id="message" class="message">
+      Please enter your email and password.
+    </div>
   </div>
 
-  <div id="app">
+  <!-- STAFF APP -->
+  <div id="app" class="hidden">
+
     <div class="card">
-      <p class="welcome" id="welcome"></p>
-      <h2>My Attendance</h2>
-      <p id="todayDate" style="text-align:center"></p>
-      <button onclick="checkIn()">CHECK IN</button>
-      <button class="checkout" onclick="checkOut()">CHECK OUT</button>
-      <p id="attendanceMessage"></p>
-      <button class="logout" onclick="logout()">LOG OUT</button>
+      <h2 id="welcome">Welcome</h2>
+      <p id="todayDate"></p>
+
+      <div class="buttons">
+        <button class="green" id="checkInButton" onclick="checkIn()">
+          Check In
+        </button>
+
+        <button class="red" id="checkOutButton" onclick="checkOut()">
+          Check Out
+        </button>
+
+        <button class="gray" onclick="logout()">Logout</button>
+      </div>
+
+      <div id="attendanceMessage" class="message">
+        Ready for attendance.
+      </div>
+
+      <p class="small">
+        Attendance is permitted only within 200 meters of the hospital GPS point.
+      </p>
     </div>
 
-    <div class="card" id="admin">
+    <!-- ADMIN -->
+    <div id="admin" class="card hidden">
       <h2>Admin Dashboard</h2>
+
       <button onclick="loadRecords()">Refresh Attendance Records</button>
 
-      <h3>Search Staff / Records</h3>
-      <input id="searchName" placeholder="Search staff name"
-             oninput="filterRecords()">
+      <hr>
+
+      <h3>Search Staff</h3>
+      <input id="searchName" type="text"
+        placeholder="Search staff name"
+        oninput="filterRecords()">
 
       <h3>Daily Report</h3>
       <input id="dailyDate" type="date" onchange="filterRecords()">
@@ -106,14 +177,22 @@
       <h3>Monthly Report</h3>
       <input id="monthlyDate" type="month" onchange="filterRecords()">
 
-      <p id="recordCount"></p>
-      <div id="records"></div>
+      <h3 id="recordCount">Total records: 0</h3>
+
+      <div id="records">No records loaded.</div>
     </div>
+
   </div>
 </div>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
-  // FIREBASE CONNECTION
+
+  // FIREBASE CONFIGURATION
   firebase.initializeApp({
     apiKey: "AIzaSyD5TkKX68UjpPNLxOi3tttorLDOrYl4UMo",
     authDomain: "latif-hospital-attendance.firebaseapp.com",
@@ -131,27 +210,125 @@
   let staff = null;
   let allRecords = [];
 
+  // PAKISTAN DATE
   function pakistanDate() {
-    return new Intl.DateTimeFormat("en-CA", {
+    const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Karachi",
       year: "numeric",
       month: "2-digit",
       day: "2-digit"
-    }).format(new Date());
+    }).formatToParts(new Date());
+
+    const p = {};
+    parts.forEach(x => p[x.type] = x.value);
+
+    return p.year + "-" + p.month + "-" + p.day;
   }
 
+  // PAKISTAN TIME
   function pakistanTime() {
-    return new Intl.DateTimeFormat("en-PK", {
+    return new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Karachi",
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: true
+      hour12: false
     }).format(new Date());
+  }
+
+  // HOSPITAL GPS LOCATION
+  const HOSPITAL_LAT = 31.796576833446725;
+  const HOSPITAL_LNG = 74.25336237431742;
+
+  const ALLOWED_RADIUS = 200;
+
+  // GPS DISTANCE CALCULATION
+  function distanceInMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = value => value * Math.PI / 180;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+    return 2 * R * Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+  }
+
+  // VERIFY HOSPITAL LOCATION
+  function verifyHospitalLocation(message) {
+    return new Promise(resolve => {
+
+      if (!navigator.geolocation) {
+        message.innerText = "GPS is not supported on this device.";
+        resolve(false);
+        return;
+      }
+
+      message.innerText = "Checking your GPS location...";
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+
+          if (accuracy > 200) {
+            message.innerText =
+              "GPS accuracy is too low. Please try again in an open area.";
+            resolve(false);
+            return;
+          }
+
+          const distance = distanceInMeters(
+            latitude,
+            longitude,
+            HOSPITAL_LAT,
+            HOSPITAL_LNG
+          );
+
+          if (distance <= ALLOWED_RADIUS) {
+            message.innerText =
+              "Hospital location verified. Distance: " +
+              Math.round(distance) + " meters.";
+
+            resolve(true);
+
+          } else {
+            message.innerText =
+              "You are outside the hospital's 200-meter area. Attendance not allowed.";
+
+            resolve(false);
+          }
+        },
+
+        error => {
+          message.innerText =
+            "Please enable phone location and allow website GPS permission.";
+
+          resolve(false);
+        },
+
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        }
+      );
+    });
   }
 
   // LOGIN
   async function login() {
+
     const msg = document.getElementById("message");
     const button = document.getElementById("loginButton");
 
@@ -167,7 +344,9 @@
         return;
       }
 
-      const result = await auth.signInWithEmailAndPassword(email, password);
+      const result =
+        await auth.signInWithEmailAndPassword(email, password);
+
       const uid = result.user.uid;
 
       const doc = await db.collection("STAFF").doc(uid).get();
@@ -183,6 +362,7 @@
 
       document.getElementById("login").style.display = "none";
       document.getElementById("app").style.display = "block";
+
       document.getElementById("welcome").innerText =
         "Welcome, " + (staff.name || "Staff");
 
@@ -197,95 +377,27 @@
     } catch (error) {
       msg.innerText = "Error: " + error.message;
       console.error(error);
+
     } finally {
       button.disabled = false;
     }
   }
 
   // CHECK IN
-  
-// LATIF ORTHOPEDIC HOSPITAL GPS LOCATION
-const HOSPITAL_LAT = 31.796576833446725;
-const HOSPITAL_LNG = 74.25336237431742;
-const ALLOWED_RADIUS = 200;
-
-function distanceInMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const toRad = value => value * Math.PI / 180;
-
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) *
-    Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) ** 2;
-
-  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function verifyHospitalLocation(message) {
-  return new Promise(resolve => {
-    if (!navigator.geolocation) {
-      message.innerText = "GPS is not supported on this device.";
-      resolve(false);
-      return;
-    }
-
-    message.innerText = "Checking your GPS location...";
-
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        const { latitude, longitude, accuracy } = position.coords;
-
-        if (accuracy > 100) {
-          message.innerText =
-            "GPS accuracy is low. Please try again outdoors.";
-          resolve(false);
-          return;
-        }
-
-        const distance = distanceInMeters(
-          latitude, longitude,
-          HOSPITAL_LAT, HOSPITAL_LNG
-        );
-
-        if (distance <= ALLOWED_RADIUS) {
-          message.innerText = "Hospital location verified.";
-          resolve(true);
-        } else {
-          message.innerText =
-            "You are outside the hospital's 200-meter area. Check In/Out not allowed.";
-          resolve(false);
-        }
-      },
-      error => {
-        message.innerText =
-          "Please enable phone location and allow website GPS access.";
-        resolve(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 0
-      }
-    );
-  });
-}
-
   async function checkIn() {
+
     const msg = document.getElementById("attendanceMessage");
 
     try {
       if (!currentUser) return;
+
       const locationAllowed = await verifyHospitalLocation(msg);
-if (!locationAllowed) return;
-      const locationAllowed = await verifyHospitalLocation(msg);
-if (!locationAllowed) return;
+      if (!locationAllowed) return;
 
       const date = pakistanDate();
+
       const recordId = currentUser.uid + "_" + date;
+
       const ref = db.collection("attendance").doc(recordId);
 
       const existing = await ref.get();
@@ -306,7 +418,10 @@ if (!locationAllowed) return;
       });
 
       msg.innerText = "Check In successful!";
-      if (staff.role === "admin") await loadRecords();
+
+      if (staff.role === "admin") {
+        await loadRecords();
+      }
 
     } catch (error) {
       msg.innerText = "Error: " + error.message;
@@ -316,17 +431,19 @@ if (!locationAllowed) return;
 
   // CHECK OUT
   async function checkOut() {
-    const locationAllowed = await verifyHospitalLocation(msg);
-if (!locationAllowed) return;
+
     const msg = document.getElementById("attendanceMessage");
 
     try {
       if (!currentUser) return;
+
       const locationAllowed = await verifyHospitalLocation(msg);
-if (!locationAllowed) return;
+      if (!locationAllowed) return;
 
       const date = pakistanDate();
+
       const recordId = currentUser.uid + "_" + date;
+
       const ref = db.collection("attendance").doc(recordId);
 
       const existing = await ref.get();
@@ -347,7 +464,10 @@ if (!locationAllowed) return;
       });
 
       msg.innerText = "Check Out successful!";
-      if (staff.role === "admin") await loadRecords();
+
+      if (staff.role === "admin") {
+        await loadRecords();
+      }
 
     } catch (error) {
       msg.innerText = "Error: " + error.message;
@@ -357,6 +477,7 @@ if (!locationAllowed) return;
 
   // ADMIN RECORDS
   async function loadRecords() {
+
     const output = document.getElementById("records");
     output.innerText = "Loading records...";
 
@@ -375,24 +496,33 @@ if (!locationAllowed) return;
       filterRecords();
 
     } catch (error) {
-      output.innerText = "Could not load records: " + error.message;
+      output.innerText =
+        "Could not load records: " + error.message;
+
       console.error(error);
     }
   }
 
   // SEARCH AND REPORT FILTERS
   function filterRecords() {
-    const search = document.getElementById("searchName").value
-      .trim().toLowerCase();
 
-    const daily = document.getElementById("dailyDate").value;
-    const monthly = document.getElementById("monthlyDate").value;
+    const search =
+      document.getElementById("searchName").value
+        .trim().toLowerCase();
+
+    const daily =
+      document.getElementById("dailyDate").value;
+
+    const monthly =
+      document.getElementById("monthlyDate").value;
 
     const filtered = allRecords.filter(record => {
+
       const name = (record.name || "").toLowerCase();
 
       const matchesName = name.includes(search);
       const matchesDay = !daily || record.date === daily;
+
       const matchesMonth = !monthly ||
         (record.date || "").startsWith(monthly);
 
@@ -411,6 +541,7 @@ if (!locationAllowed) return;
     }
 
     filtered.forEach(record => {
+
       const div = document.createElement("div");
       div.className = "record";
 
@@ -418,6 +549,7 @@ if (!locationAllowed) return;
       name.textContent = record.name || "Staff";
 
       const details = document.createElement("p");
+
       details.textContent =
         "Date: " + (record.date || "") +
         " | Check In: " + (record.checkIn || "Not checked in") +
@@ -425,24 +557,31 @@ if (!locationAllowed) return;
 
       const status = document.createElement("p");
       status.className = "small";
-      status.textContent = "Status: " + (record.status || "Present");
+
+      status.textContent =
+        "Status: " + (record.status || "Present");
 
       div.appendChild(name);
       div.appendChild(details);
       div.appendChild(status);
+
       output.appendChild(div);
     });
   }
 
   // LOGOUT
   async function logout() {
+
     try {
       await auth.signOut();
       location.reload();
+
     } catch (error) {
       alert(error.message);
     }
   }
+
 </script>
+
 </body>
 </html>
