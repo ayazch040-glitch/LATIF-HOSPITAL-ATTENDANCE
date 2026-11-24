@@ -23,6 +23,10 @@ td,th{border:1px solid #ddd;padding:9px;text-align:left}
 th{background:#e0f2fe}
 .stats{display:flex;gap:10px;flex-wrap:wrap}
 .stat{flex:1;min-width:120px;padding:15px;background:#e0f2fe;border-radius:8px;text-align:center}
+#cameraVideo{width:100%;max-width:420px;display:block;margin:10px auto;background:#111;border-radius:10px}
+.photoPreview{width:100%;max-width:220px;display:block;margin:10px auto;border-radius:10px}
+.cameraButtons{display:flex;gap:8px;flex-wrap:wrap}
+.cameraButtons button{flex:1;min-width:120px}
 </style>
 </head>
 <body>
@@ -42,8 +46,23 @@ th{background:#e0f2fe}
 <div id="staffSection" class="hidden">
 <h2 id="welcome"></h2>
 <div id="attendanceMessage" class="message">Attendance Panel</div>
+
+<h3>Live Camera — Required</h3>
+<video id="cameraVideo" autoplay playsinline muted></video>
+<canvas id="cameraCanvas" class="hidden"></canvas>
+<img id="photoPreview" class="photoPreview hidden" alt="Captured attendance photo">
+
+<div class="cameraButtons">
+<button id="startCameraBtn" onclick="startCamera()">OPEN LIVE CAMERA</button>
+<button id="captureBtn" class="green" onclick="capturePhoto()" disabled>TAKE PHOTO</button>
+<button id="retakeBtn" class="orange hidden" onclick="retakePhoto()">RETAKE PHOTO</button>
+</div>
+
+<p id="cameraMessage" class="message">Camera open karein aur apni photo lein.</p>
+
 <button class="green" id="inBtn" onclick="markAttendance('in')">CHECK IN</button>
 <button class="orange" id="outBtn" onclick="markAttendance('out')">CHECK OUT</button>
+
 <h3>My Attendance</h3>
 <div id="myRecords"></div>
 <button class="red" onclick="logout()">LOGOUT</button>
@@ -65,7 +84,9 @@ th{background:#e0f2fe}
 <div id="adminMessage" class="message"></div>
 <div class="tablewrap">
 <table>
-<thead><tr><th>Name</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th></tr></thead>
+<thead>
+<tr><th>Name</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Status</th><th>Photos</th></tr>
+</thead>
 <tbody id="recordsBody"></tbody>
 </table>
 </div>
@@ -88,7 +109,9 @@ const firebaseConfig = {
   measurementId: "G-EZW9BYGNW4"
 };
 
-let auth, db, currentUser=null, currentStaff=null, records=[];
+let auth,db,currentUser=null,currentStaff=null,records=[];
+let cameraStream=null;
+let capturedPhoto="";
 
 function showMessage(id,text){
   const el=document.getElementById(id);
@@ -110,7 +133,7 @@ function timePK(){
 }
 
 function updateClock(){
-  document.getElementById("clock").textContent =
+  document.getElementById("clock").textContent=
     "Pakistan Date: "+datePK()+" | Time: "+timePK();
 }
 updateClock();
@@ -121,7 +144,105 @@ function showSection(id){
     document.getElementById(x).classList.add("hidden")
   );
   document.getElementById(id).classList.remove("hidden");
+  if(id!=="staffSection")stopCamera();
 }
+
+function stopCamera(){
+  if(cameraStream){
+    cameraStream.getTracks().forEach(track=>track.stop());
+    cameraStream=null;
+  }
+  document.getElementById("cameraVideo").srcObject=null;
+  document.getElementById("captureBtn").disabled=true;
+}
+
+window.startCamera=async function(){
+  const message=document.getElementById("cameraMessage");
+  const startBtn=document.getElementById("startCameraBtn");
+  const captureBtn=document.getElementById("captureBtn");
+
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      throw new Error("Camera is not supported. Website HTTPS par kholein.");
+    }
+
+    stopCamera();
+    capturedPhoto="";
+    document.getElementById("photoPreview").classList.add("hidden");
+    document.getElementById("retakeBtn").classList.add("hidden");
+
+    message.textContent="Camera open ho raha hai...";
+    startBtn.disabled=true;
+
+    cameraStream=await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode:"user",
+        width:{ideal:640},
+        height:{ideal:480}
+      }
+    });
+
+    document.getElementById("cameraVideo").srcObject=cameraStream;
+    await document.getElementById("cameraVideo").play();
+
+    captureBtn.disabled=false;
+    message.textContent="Camera ready hai. TAKE PHOTO dabayein.";
+  }catch(e){
+    message.textContent="Camera error: "+e.message+
+      " Browser mein camera permission allow karein.";
+    stopCamera();
+  }finally{
+    startBtn.disabled=false;
+  }
+};
+
+window.capturePhoto=function(){
+  const video=document.getElementById("cameraVideo");
+  const canvas=document.getElementById("cameraCanvas");
+  const preview=document.getElementById("photoPreview");
+
+  if(!cameraStream||!video.videoWidth){
+    showMessage("cameraMessage","Pehle live camera open karein.");
+    return;
+  }
+
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+
+  const context=canvas.getContext("2d");
+  context.drawImage(video,0,0,canvas.width,canvas.height);
+
+  let quality=0.65;
+  capturedPhoto=canvas.toDataURL("image/jpeg",quality);
+
+  while(capturedPhoto.length>220000&&quality>0.25){
+    quality-=0.10;
+    capturedPhoto=canvas.toDataURL("image/jpeg",quality);
+  }
+
+  if(capturedPhoto.length>250000){
+    capturedPhoto="";
+    showMessage("cameraMessage","Photo size zyada hai. Dobara photo lein.");
+    return;
+  }
+
+  preview.src=capturedPhoto;
+  preview.classList.remove("hidden");
+
+  stopCamera();
+  document.getElementById("retakeBtn").classList.remove("hidden");
+  document.getElementById("startCameraBtn").textContent="OPEN CAMERA AGAIN";
+  showMessage("cameraMessage","Photo capture ho gayi. Ab Check In ya Check Out karein.");
+};
+
+window.retakePhoto=function(){
+  capturedPhoto="";
+  document.getElementById("photoPreview").src="";
+  document.getElementById("photoPreview").classList.add("hidden");
+  document.getElementById("retakeBtn").classList.add("hidden");
+  startCamera();
+};
 
 window.login=async function(){
   const email=document.getElementById("email").value.trim();
@@ -146,6 +267,8 @@ window.login=async function(){
 };
 
 window.logout=async function(){
+  stopCamera();
+  capturedPhoto="";
   await auth.signOut();
 };
 
@@ -155,27 +278,25 @@ window.markAttendance=async function(action){
   const msg=document.getElementById("attendanceMessage");
   const inBtn=document.getElementById("inBtn");
   const outBtn=document.getElementById("outBtn");
+
+  if(!capturedPhoto){
+    msg.textContent="Attendance se pehle live camera se photo lena zaroori hai.";
+    return;
+  }
+
   inBtn.disabled=true;
   outBtn.disabled=true;
 
   try{
-    if(!navigator.geolocation)throw new Error("GPS is not supported by this browser.");
-
-    msg.textContent="Please allow location access...";
-
-    await new Promise((resolve,reject)=>{
-      navigator.geolocation.getCurrentPosition(resolve,reject,{
-        enableHighAccuracy:true,timeout:20000,maximumAge:0
-      });
-    });
-
     const date=datePK();
     const ref=db.collection("attendance").doc(currentUser.uid+"_"+date);
     const snap=await ref.get();
     const now=timePK();
 
     if(action==="in"){
-      if(snap.exists)throw new Error("Aaj aapka Check In pehle se laga hua hai.");
+      if(snap.exists){
+        throw new Error("Aaj aapka Check In pehle se laga hua hai.");
+      }
 
       await ref.set({
         uid:currentUser.uid,
@@ -183,26 +304,37 @@ window.markAttendance=async function(action){
         date:date,
         checkIn:now,
         checkOut:"",
+        checkInPhoto:capturedPhoto,
+        checkOutPhoto:"",
         status:"Present",
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      msg.textContent="Check In successful! "+now;
+      msg.textContent="Check In successful! Photo save ho gayi. "+now;
     }else{
       if(!snap.exists)throw new Error("Pehle Check In karein.");
       if(snap.data().checkOut)throw new Error("Check Out pehle ho chuka hai.");
 
-      await ref.update({checkOut:now,status:"Completed"});
-      msg.textContent="Check Out successful! "+now;
+      await ref.update({
+        checkOut:now,
+        checkOutPhoto:capturedPhoto,
+        status:"Completed"
+      });
+
+      msg.textContent="Check Out successful! Photo save ho gayi. "+now;
     }
 
+    capturedPhoto="";
+    document.getElementById("photoPreview").src="";
+    document.getElementById("photoPreview").classList.add("hidden");
+    document.getElementById("retakeBtn").classList.add("hidden");
+    document.getElementById("startCameraBtn").textContent="OPEN LIVE CAMERA";
+    showMessage("cameraMessage","Agli attendance ke liye dobara camera open karein.");
+
     await loadMyRecords();
+
   }catch(e){
-    if(e.code===1){
-      msg.textContent="Location permission allow karein.";
-    }else{
-      msg.textContent="Error: "+e.message;
-    }
+    msg.textContent="Error: "+e.message;
   }finally{
     inBtn.disabled=false;
     outBtn.disabled=false;
@@ -212,9 +344,11 @@ window.markAttendance=async function(action){
 async function loadMyRecords(){
   const area=document.getElementById("myRecords");
   area.textContent="Loading...";
+
   try{
     const snap=await db.collection("attendance")
       .where("uid","==",currentUser.uid).get();
+
     const arr=[];
     snap.forEach(d=>arr.push(d.data()));
     arr.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
@@ -231,6 +365,7 @@ async function loadMyRecords(){
       });
       table.appendChild(tr);
     });
+
     area.replaceChildren(table);
   }catch(e){
     area.textContent="Records error: "+e.message;
@@ -240,9 +375,11 @@ async function loadMyRecords(){
 window.loadAdminRecords=async function(){
   const el=document.getElementById("adminMessage");
   el.textContent="Loading records...";
+
   try{
     const snap=await db.collection("attendance")
       .orderBy("date","desc").limit(500).get();
+
     records=[];
     snap.forEach(d=>records.push(d.data()));
     el.textContent="Records loaded successfully.";
@@ -250,6 +387,21 @@ window.loadAdminRecords=async function(){
   }catch(e){
     el.textContent="Admin error: "+e.message;
   }
+};
+
+window.viewPhoto=function(data){
+  if(!data)return;
+
+  const win=window.open();
+  if(!win){
+    alert("Photo window blocked. Browser mein pop-ups allow karein.");
+    return;
+  }
+
+  const img=win.document.createElement("img");
+  img.src=data;
+  img.style="max-width:100%;height:auto";
+  win.document.body.appendChild(img);
 };
 
 window.renderRecords=function(){
@@ -273,7 +425,7 @@ window.renderRecords=function(){
   if(!filtered.length){
     const tr=document.createElement("tr");
     const td=document.createElement("td");
-    td.colSpan=5;
+    td.colSpan=6;
     td.textContent="No records found.";
     tr.appendChild(td);
     body.appendChild(tr);
@@ -282,11 +434,34 @@ window.renderRecords=function(){
 
   filtered.forEach(r=>{
     const tr=document.createElement("tr");
+
     [r.name,r.date,r.checkIn,r.checkOut,r.status].forEach(v=>{
       const td=document.createElement("td");
       td.textContent=v||"";
       tr.appendChild(td);
     });
+
+    const photoCell=document.createElement("td");
+
+    if(r.checkInPhoto){
+      const b=document.createElement("button");
+      b.textContent="Check In Photo";
+      b.onclick=()=>viewPhoto(r.checkInPhoto);
+      photoCell.appendChild(b);
+    }
+
+    if(r.checkOutPhoto){
+      const b=document.createElement("button");
+      b.textContent="Check Out Photo";
+      b.onclick=()=>viewPhoto(r.checkOutPhoto);
+      photoCell.appendChild(b);
+    }
+
+    if(!r.checkInPhoto&&!r.checkOutPhoto){
+      photoCell.textContent="No photos";
+    }
+
+    tr.appendChild(photoCell);
     body.appendChild(tr);
   });
 };
@@ -308,6 +483,8 @@ try{
   auth.onAuthStateChanged(async user=>{
     currentUser=user;
     currentStaff=null;
+    capturedPhoto="";
+    stopCamera();
 
     if(!user){
       showSection("loginSection");
